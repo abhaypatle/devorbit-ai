@@ -2,7 +2,6 @@
 
 on:
   push:
-  
     branches: [ "main", "master" ]
   pull_request:
     branches: [ "main", "master" ]
@@ -37,9 +36,21 @@ jobs:
         npm install
         npm run build
 
-    - name: Docker Build Test
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build Backend Docker Image
       uses: docker/build-push-action@v5
       with:
         context: .
+        file: backend/Dockerfile
         push: false
-        tags: devorbit-ai:latest
+        tags: devorbit-ai-backend:latest
+
+    - name: Build Frontend Docker Image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: frontend/Dockerfile
+        push: false
+        tags: devorbit-ai-frontend:latest
