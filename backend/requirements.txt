@@ -1,0 +1,17 @@
+﻿fastapi
+uvicorn
+pydantic
+pydantic-settings
+langgraph
+sse_starlette
+langchain-aws
+python-dotenv
+sqlalchemy
+passlib
+bcrypt
+PyJWT
+python-multipart
+boto3
+requests
+email-validator
+greenlet
