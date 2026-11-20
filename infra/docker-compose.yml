@@ -1,0 +1,70 @@
+services:
+  api:
+    build:
+      context: ../backend
+    env_file:
+      - ../backend/.env
+    environment:
+      DATABASE_HOST: db
+      DATABASE_PORT: 5432
+      DATABASE_NAME: ${POSTGRES_DB:-devorbit}
+      DATABASE_USER: ${POSTGRES_USER:-devorbit}
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD:-devorbit}
+      STORAGE_MODE: filesystem
+      LOCAL_STORAGE_PATH: /var/lib/devorbit/files
+    ports:
+      - "8000:8000"
+    volumes:
+      - document_data:/var/lib/devorbit/files
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+
+  frontend:
+    build:
+      context: ../frontend
+      target: development
+    environment:
+      API_PROXY_TARGET: http://api:8000
+    ports:
+      - "5173:5173"
+    depends_on:
+      api:
+        condition: service_healthy
+
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-devorbit}
+      POSTGRES_USER: ${POSTGRES_USER:-devorbit}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-devorbit}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U devorbit -d devorbit"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  postgres_data:
+  document_data:
